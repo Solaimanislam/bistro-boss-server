@@ -1,8 +1,9 @@
 const express = require('express');
+require('dotenv').config()
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-require('dotenv').config()
+
 const port = process.env.PORT || 5000;
 
 // middleware 
@@ -25,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+
 
         const userCollection = client.db("bistroDb").collection('users');
         const menuCollection = client.db("bistroDb").collection('menu');
@@ -43,12 +44,14 @@ async function run() {
         const verifyToken = (req, res, next) => {
             console.log('inside verify token', req.headers);
             if (!req.headers.authorization) {
-                res.status(401).send({ message: 'unauthorized access ' });
+                res.status(401).send({ message: 'unauthorized access 46 ' });
             }
-            const token = req.headers.authorization.split('  ')[1];
+            const token = req.headers.authorization.split(' ')[1];
+            console.log(token);
+            console.log(process.env.ACCESS_TOKEN_SECRET);
             jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
                 if (err) {
-                    return res.status(401).send({ message: 'unauthorized access' })
+                    return res.status(401).send({ message: 'unauthorized access 51' })
                 }
                 req.decoded = decoded;
                 next();
@@ -133,6 +136,14 @@ async function run() {
             const result = await menuCollection.find().toArray();
             res.send(result);
         })
+
+        app.post('/menu', verifyToken, verifyAdmin, async (req, res) => {
+            const item = req.body;
+            const result = await menuCollection.insertOne(item);
+            res.send(result);
+        })
+
+
         app.get('/reviews', async (req, res) => {
             const result = await reviewCollection.find().toArray();
             res.send(result);
